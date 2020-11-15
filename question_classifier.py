@@ -10,6 +10,7 @@ from nltk.corpus import stopwords
 import numpy as np
 from numpy.linalg import norm
 from sklearn.feature_extraction.text import TfidfVectorizer
+import json
 
 stopwords = stopwords.words('english')
 ps = PorterStemmer()
@@ -23,11 +24,10 @@ vocab = []
 def main():
     # get questions and answers
     question = sys.argv[1]
-    questions_answers = get_question_and_answers()
-
-    # clean questions and map to answers
-    qq_map = map_questions_to_clean_questions(questions_answers)
-    qa_map = map_questions_to_answers(questions_answers)
+    file = open("question_db.json", "r")
+    data = json.load(file)
+    qq_map = data["qq_map"]
+    qa_map = data["qa_map"]
 
     # train model
     train_data = get_training_data(qa_map)
