@@ -54,22 +54,6 @@ def main():
     print(qa_map[most_similar_question])
 
 
-def map_questions_to_clean_questions(questions_answers):
-    res = {}
-    for question, _ in questions_answers:
-        res[clean(question)] = question
-    
-    return res
-
-
-def map_questions_to_answers(questions_answers):
-    res = {}
-    for question, answer in questions_answers:
-        res[clean(question)] = answer 
-
-    return res
-
-
 def get_vocab(train_data):
     res = []
     for sent in train_data:
@@ -84,7 +68,12 @@ def get_most_similar_question(model, train_data, question):
 
     # find most similar question
     a = get_vec(model, question)
-    for train_question in train_data:
+    for train_question in train_data: 
+        print("\n\n----------------------------------------------")
+        print("Main Question:")
+        print(question)
+        print("\n\nTrain Question:")
+        print(train_question)
         b = get_vec(model, train_question)
         a, b = normalize_length(a, b)
         # cosine similarity between question and train_question
@@ -104,7 +93,7 @@ def get_most_similar_question(model, train_data, question):
 def get_vec(model, data):
     if(METHOD == "tfidf"):
         data = " ".join(data)
-        return model.transform([data]).todense()
+        return model.transform([data]).todense().tolist()
     elif(METHOD == "word2vec"):
         return model[data]
     else:
@@ -112,13 +101,24 @@ def get_vec(model, data):
 
 
 def normalize_length(a, b):
-    if(len(a) > len(b)):
-        a = a[:len(b)]
-    elif(len(b) > len(a)):
-        b = b[:len(a)]
-    
-    return a, b
+    max_length_0 = max(len(a), len(b))
+    max_length_1 = max(len(a[0]), len(b[0]))
 
+    padded_array_a = np.zeros((max_length_0, max_length_1))
+    padded_array_b = np.zeros((max_length_0, max_length_1))
+
+    for i in range(len(a)):
+        for j in range(len(a[0])):
+            padded_array_a[i][j] = a[i][j]
+
+    for i in range(len(b)):
+        for j in range(len(b[0])):
+            padded_array_b[i][j] = b[i][j]
+
+    return padded_array_a, padded_array_b
+
+
+    
 
 def process_question(model, question):
     res = []
@@ -150,31 +150,6 @@ def clean(string):
     words = string.split(" ")
 
     return " ".join([ps.stem(w) for w in words if w not in stopwords])
-
-
-
-def get_question_and_answers():
-    # get q&a's from cal poly page
-    r = requests.get("https://visit.calpoly.edu/faq/faqs.html")
-    soup = BeautifulSoup(r.text, "html.parser")
-
-    # parse out questions and answers
-    qa_container = soup.select_one("ul.faq")
-    qa_list = qa_container.select("li")
-
-    # make a mapping from questions to answers
-    questions_answers = []
-    for qa in qa_list:
-        question = qa.select_one("p.accordianLink")
-        answer = qa.select_one("div.answerBlock > p")
-        if(question is not None and answer is not None):
-            questions_answers.append((question.text, answer.text))
-        
-    
-    return questions_answers
-
-    
-
 
 
 
