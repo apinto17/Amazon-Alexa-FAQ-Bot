@@ -6,15 +6,13 @@ from gensim.models import Word2Vec
 import re
 from nltk.stem import PorterStemmer
 import nltk
-from nltk.corpus import stopwords
 import numpy as np
 from numpy.linalg import norm
 from sklearn.feature_extraction.text import TfidfVectorizer
 import json
 
-stopwords = stopwords.words('english')
 ps = PorterStemmer()
-
+stopwords = []
 
 METHOD = "tfidf"
 vocab = []
@@ -22,6 +20,12 @@ vocab = []
 
 
 def main():
+    # get stopwords
+    global stopwords
+    stopwords_file = open("stopwords.txt", "r")
+    for word in stopwords_file:
+        # get rid of newline at the end of word
+        stopwords.append(word[:-1])
     # get questions and answers
     question = sys.argv[1]
     file = open("question_db.json", "r")
@@ -116,7 +120,6 @@ def normalize_length(a, b):
             padded_array_b[i][j] = b[i][j]
 
     return padded_array_a, padded_array_b
-
 
     
 

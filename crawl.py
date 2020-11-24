@@ -5,18 +5,23 @@ from gensim.models import Word2Vec
 import re
 from nltk.stem import PorterStemmer
 import nltk
-from nltk.corpus import stopwords
 import numpy as np
 from numpy.linalg import norm
 from sklearn.feature_extraction.text import TfidfVectorizer
 import json
 
-stopwords = stopwords.words('english')
 ps = PorterStemmer()
+stopwords = []
 
 
 
 def main():
+    # get stopwords
+    global stopwords
+    stopwords_file = open("stopwords.txt", "r")
+    for word in stopwords_file:
+        # get rid of newline at the end of word
+        stopwords.append(word[:-1])
     # get questions and answers
     questions_answers = get_question_and_answers()
 
@@ -61,8 +66,13 @@ def get_question_and_answers():
     sites_list = []
 
     # get q&a's from cal poly page
-    sites_list.append(Housing("https://visit.calpoly.edu/faq/faqs.html"))
-
+    sites_list.append(Visit("https://visit.calpoly.edu/faq/faqs.html"))
+    sites_list.append(Student("https://afd.calpoly.edu/student-accounts/guides/faq-student"))
+    sites_list.append(OpenHouse("https://www.calpoly.edu/faq-open-house"))
+    sites_list.append(IncomingStudent("https://orientation.calpoly.edu/cal-poly-faqs"))
+    sites_list.append(Housing("http://www.housing.calpoly.edu/content/frequently-asked-questions"))
+    sites_list.append(MathScience("https://csmadvising.calpoly.edu/content/faqs"))
+    sites_list.append(DRC("https://drc.calpoly.edu/content/support/faq"))
     # get all questions and answers from sites
     res = []
     for site in sites_list:
@@ -86,7 +96,7 @@ class Site():
 
 
 
-class Housing(Site):
+class Visit(Site):
 
     def get_questions_and_answers(self):
         # parse out questions and answers
@@ -101,6 +111,125 @@ class Housing(Site):
             if(question is not None and answer is not None):
                 questions_answers.append((question.text, answer.text))
             
+        return questions_answers
+
+
+class Student(Site):
+
+    def get_questions_and_answers(self):
+        # parse out questions and answers
+        qa_container = self.soup.select_one("ul.accordion")
+        qa_list = qa_container.select("li")
+
+        # make a mapping from questions to answers
+        questions_answers = []
+        for qa in qa_list:
+            question = qa.select_one("a.accordion-title")
+            answer = qa.select_one("div.accordion-content")
+            if(question is not None and answer is not None):
+                questions_answers.append((question.text, answer.text))
+            
+        return questions_answers
+
+
+class OpenHouse(Site):
+
+    def get_questions_and_answers(self):
+        # parse out questions and answers
+        qa_container = self.soup.find("article", {"role" : "article"})
+        qa_list = qa_container.select("div > div > collapsible")
+
+        # make a mapping from questions to answers
+        questions_answers = []
+        for qa in qa_list:
+            question = qa.find("div", {"slot" : "title"})
+            answer = qa.find("div", {"slot" : "content"})
+            if(question is not None and answer is not None):
+                questions_answers.append((question.text, answer.text))
+            
+        return questions_answers
+
+
+class IncomingStudent(Site):
+
+    def get_questions_and_answers(self):
+        # parse out questions and answers
+        qa_list = self.soup.select("div.accordion")
+
+        # make a mapping from questions to answers
+        questions_answers = []
+        for qa in qa_list:
+            question = qa.select_one("h3")
+            answer = qa.select_one("p")
+            if(question is not None and answer is not None):
+                questions_answers.append((question.text, answer.text))            
+        
+        return questions_answers
+
+
+class Housing(Site):
+
+    def get_questions_and_answers(self):
+        # parse out questions and answers
+        qa_list = self.soup.select("div.accordion")
+
+        # make a mapping from questions to answers
+        questions_answers = []
+        for qa in qa_list:
+            question = qa.select_one("p:nth-child(2)")
+            answer = qa.select_one("p:nth-child(1)")
+            if(question is not None and answer is not None):
+                questions_answers.append((question.text, answer.text))            
+        
+        return questions_answers
+
+
+class MathScience(Site):
+
+    def get_questions_and_answers(self):
+        # parse out questions and answers
+        qa_container = self.soup.select_one("div.field-item")
+        qa_list = qa_container.select("div.accordion")
+
+        # make a mapping from questions to answers
+        questions_answers = []
+        for qa in qa_list:
+            question = qa.select_one("div:nth-child(1)")
+            answer = qa.select_one("div:nth-child(2)")
+            if(question is not None and answer is not None):
+                questions_answers.append((question.text, answer.text))            
+        
+        return questions_answers
+
+
+class DRC(Site):
+
+    def get_answers(self, qa_container):
+        result = []
+        answers = qa_container.findAll("p")
+
+        for answer in answers:
+            if(len(answer.text) > 5 and not answer.text.startswith("For students living on-campus, please visit the Res")):
+                result.append(answer)
+
+        return result
+
+
+    def get_questions_and_answers(self):
+        # parse out questions and answers
+        qa_container = self.soup.select_one("div.field-item")
+
+        questions = self.soup.findAll("a", {"id" : re.compile("^q")})
+        answers = self.get_answers(qa_container)[:-1]
+
+        total = len(questions)
+        # make a mapping from questions to answers
+        questions_answers = []
+        for i in range(total):
+            question = questions[i].next
+            answer = answers[i].text
+            if(question is not None and answer is not None):
+                questions_answers.append((question, answer))            
         
         return questions_answers
         
