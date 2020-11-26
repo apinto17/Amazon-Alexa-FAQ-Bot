@@ -57,7 +57,8 @@ def clean(string):
     string = re.sub("[^A-Za-z]", " ", string).strip()
     words = string.split(" ")
 
-    return " ".join([ps.stem(w) for w in words if w not in stopwords])
+    string = " ".join([ps.stem(w) for w in words if w not in stopwords])
+    return string.replace("  ", " ")
 
 
 
