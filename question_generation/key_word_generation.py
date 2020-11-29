@@ -98,7 +98,7 @@ def main():
         subject = extract_subject(document)
 
         # get sentence containing subject
-        sent_w_subject = get_sent_w_subject(document, subject)
+        sent_w_subject = get_sent_w_subject(sections[i], subject)
 
         if(subject is None):
             continue
