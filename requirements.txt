@@ -2,3 +2,4 @@ bs4
 nltk
 gensim
 sklearn
+wikipedia-1.4.0
