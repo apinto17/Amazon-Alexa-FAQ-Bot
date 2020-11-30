@@ -72,15 +72,22 @@ def get_most_similar_question(model, train_data, question):
 
     # find most similar question
     a = get_vec(model, question)
+    print(a)
     for train_question in train_data: 
-        print("\n\n----------------------------------------------")
-        print("Main Question:")
-        print(question)
-        print("\n\nTrain Question:")
-        print(train_question)
+        # print("\n\n----------------------------------------------")
+        # print("Main Question:")
+        # print(question)
+        # print("\n\nTrain Question:")
+        # print(train_question)
         b = get_vec(model, train_question)
         a, b = normalize_length(a, b)
         # cosine similarity between question and train_question
+        f = (norm(a) * norm(b))
+        if f == 0.0:
+            #print(f)
+            #print(a)
+            #print(b)
+            continue
         cos_sim = np.vdot(a, b)/(norm(a) * norm(b))
 
         # join train_question back into single string

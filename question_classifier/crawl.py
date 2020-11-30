@@ -66,6 +66,8 @@ def get_question_and_answers():
     # make a sites list to add all the sites to be scraped
     sites_list = []
 
+    # tuple (question, answer)
+
     # get q&a's from cal poly page
     sites_list.append(Visit("https://visit.calpoly.edu/faq/faqs.html"))
     sites_list.append(Student("https://afd.calpoly.edu/student-accounts/guides/faq-student"))
@@ -78,6 +80,36 @@ def get_question_and_answers():
     res = []
     for site in sites_list:
         res.extend(site.get_questions_and_answers())
+
+    #get from file
+    wikiQues = []
+    try:
+        f = open('WikiGeneratedQuestions.json', 'r', encoding = "utf8")
+        data = json.load(f)
+        generated_q_a = data["gen_qa"]
+        
+        
+        for question, answer in generated_q_a.items():
+            wikiQues.append((question, answer))
+
+    except OSError as err:
+        print("OS error: {0}".format(err))
+
+    try:
+        f = open('WikiGeneratedQuestions2.json', 'r', encoding = "utf8")
+        data = json.load(f)
+        generated_q_a = data["gen_qa"]
+        
+        
+        for question, answer in generated_q_a.items():
+            wikiQues.append((question, answer))
+
+    except OSError as err:
+        print("OS error: {0}".format(err))
+
+
+    if wikiQues:
+        res.extend(wikiQues)
 
     return res
 
