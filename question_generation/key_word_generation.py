@@ -48,7 +48,7 @@ def word_freq_dist(document):
     fdist = nltk.FreqDist(words)
     return fdist
 
-def extract_subject(document):
+def extract_key_words(document):
     # Get most frequent Nouns
     fdist = word_freq_dist(document)
     most_freq_nouns = [w for w, c in fdist.most_common(10)
@@ -63,48 +63,36 @@ def extract_subject(document):
     subject_nouns = [entity for entity in top_10_entities
                     if entity.split()[0] in most_freq_nouns]
     if(len(subject_nouns) > 0):
-        return subject_nouns[0]
+        return subject_nouns
     else:
         return None
 
-def get_subject(document):
+def get_key_words(document):
     document = clean_document(document)
-    subject = extract_subject(document)
+    key_words = extract_key_words(document)
 
-    return subject
+    return key_words
 
-def get_sent_w_subject(section, subject):
-    if(subject is None):
-        return None
-    sents = nltk.sent_tokenize(section)
-
-    for sent in sents:
-        if(subject in sent.lower()):
-            return sent
 
 
 def main():
     # split by section
     raw_content = wikipedia.page("California Polytechnic State University").content
-    titles_removed = re.sub("=== .* ===", "*****", raw_content).strip()
-    titles_removed = re.sub("== .* ==", "*****", titles_removed)
-    sections = titles_removed.split("*****")
+    titles_removed = re.sub("=== .* ===", "", raw_content).strip()
+    titles_removed = re.sub("== .* ==", "", titles_removed).strip()
+    sentences = nltk.sent_tokenize(titles_removed)
 
-    key_words = []
-    for i in range(len(sections)):
-        # get subject
-        print(sections[i])
-        document = clean_document(sections[i])
-        subject = extract_subject(document)
+    key_words_list = []
+    for sent in sentences:
+        # get key words
+        document = clean_document(sent)
+        key_words = extract_key_words(document)
 
-        # get sentence containing subject
-        sent_w_subject = get_sent_w_subject(sections[i], subject)
-
-        if(subject is None):
+        if(key_words is None):
             continue
-        key_words.append((subject, sent_w_subject))
+        key_words_list.append((key_words, sent))
 
-    print(key_words)
+    print(key_words_list)
 
 
 
