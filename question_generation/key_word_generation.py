@@ -1,12 +1,7 @@
 import wikipedia
 import re
-from bs4 import BeautifulSoup
-import requests
-import pickle
 import nltk
 from nltk.corpus import stopwords
-import json
-
 
 stop = stopwords.words('english')
 
@@ -51,7 +46,7 @@ def word_freq_dist(document):
 def extract_subject(document):
     # Get most frequent Nouns
     fdist = word_freq_dist(document)
-    most_freq_nouns = [w for w, c in fdist.most_common(10)
+    most_freq_nouns = [w for w, c in fdist.most_common(20)
                        if nltk.pos_tag([w])[0][1] in NOUNS]
 
     # Get Top 10 entities
@@ -67,6 +62,41 @@ def extract_subject(document):
     else:
         return None
 
+
+def extract_other_targets(document):
+    # Get most frequent Nouns
+    fdist = word_freq_dist(document)
+    most_freq_nouns = [w for w, c in fdist.most_common(20)
+                       if nltk.pos_tag([w])[0][1] in NOUNS]
+    most_freq_verbs = [w for w, c in fdist.most_common(1000)
+                       if nltk.pos_tag([w])[0][1] in VERBS]
+
+
+    print("most freq noun:", most_freq_nouns)
+    print("most freq verbs:", most_freq_verbs)
+
+    # Get Top 10 entities
+    entities = get_entities(document)
+
+    top_10_entities = [w for w, c in nltk.FreqDist(entities).most_common(10)]
+
+    print("entities are:", top_10_entities)
+
+    return most_freq_nouns + most_freq_verbs + top_10_entities
+
+
+    # # Get the subject noun by looking at the intersection of top 10 entities
+    # # and most frequent nouns. It takes the first element in the list
+    # subject_nouns = [entity for entity in top_10_entities
+    #                 if entity.split()[0] in most_freq_nouns]
+    # if(len(subject_nouns) > 0):
+    #     return subject_nouns[0]
+    # else:
+    #     return None
+
+
+
+
 def get_subject(document):
     document = clean_document(document)
     subject = extract_subject(document)
@@ -81,6 +111,53 @@ def get_sent_w_subject(section, subject):
     for sent in sents:
         if(subject in sent.lower()):
             return sent
+    return None
+
+
+def get_wiki_sections():
+    # split by section
+    raw_content = wikipedia.page("California Polytechnic State University").content
+    titles_removed = re.sub("=== .* ===", "*****", raw_content).strip()
+    titles_removed = re.sub("== .* ==", "*****", titles_removed)
+    sections = titles_removed.split("*****")
+    return sections
+
+def Get_tartet_word_and_sentence(sections): #returns list of list of tuples, inner list is by section
+    
+    key_words = []
+    for i in range(1): #len(sections)
+        this_section = []
+        # get subject
+        print(sections[i])
+        document = clean_document(sections[i])
+        subject = extract_subject(document)
+
+        my_targets_Lst = extract_other_targets(document)
+
+        my_targets_Lst = list(set(my_targets_Lst))
+        # get sentence containing subject
+        
+        if(subject != None):
+            sent_w_subject = get_sent_w_subject(sections[i], subject)
+            if sent_w_subject != None:
+                this_section.append((subject, sent_w_subject))
+
+        print("my targets set:" , set(my_targets_Lst))
+        print("my targets list:", my_targets_Lst)
+        for word in my_targets_Lst:
+            sent_w_subject = get_sent_w_subject(sections[i], word)
+            if sent_w_subject != None:
+                this_section.append((word, sent_w_subject))
+
+
+
+        key_words.append(this_section)
+
+    print("\n\n")
+    for w,_ in key_words[0]:
+        print(w)
+    print(len(key_words[0]))
+
 
 
 def main():
@@ -91,24 +168,41 @@ def main():
     sections = titles_removed.split("*****")
 
     key_words = []
-    for i in range(len(sections)):
+    for i in range(1): #len(sections)
+        this_section = []
         # get subject
         print(sections[i])
         document = clean_document(sections[i])
         subject = extract_subject(document)
 
+        my_targets_Lst = extract_other_targets(document)
+
         # get sentence containing subject
-        sent_w_subject = get_sent_w_subject(sections[i], subject)
+        
+        if(subject != None):
+            sent_w_subject = get_sent_w_subject(sections[i], subject)
+            if sent_w_subject != None:
+                this_section.append((subject, sent_w_subject))
 
-        if(subject is None):
-            continue
-        key_words.append((subject, sent_w_subject))
+        print("my targets list:", my_targets_Lst)
+        for word in my_targets_Lst:
+            sent_w_subject = get_sent_w_subject(sections[i], word)
+            if sent_w_subject != None:
+                this_section.append((word, sent_w_subject))
 
-    print(key_words)
+
+
+        key_words.append(this_section)
+
+    print("\n\n")
+    for w,_ in key_words[0]:
+        print(w)
+    print(len(key_words[0]))
 
 
 
 if(__name__ == "__main__"):
-    main()
-
+    #main()
+    wiki_sections = get_wiki_sections()
+    key_words_list = Get_tartet_word_and_sentence(wiki_sections)
 
