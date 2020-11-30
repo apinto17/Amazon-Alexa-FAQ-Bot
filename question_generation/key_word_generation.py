@@ -90,9 +90,11 @@ def main():
 
         if(key_words is None):
             continue
-        key_words_list.append((key_words, sent))
-
-    print(key_words_list)
+        # key_words_list.append((key_words, sent))
+        print("---------------------------------")
+        for key_word in key_words:
+            print("Key word: " + key_word)
+        print(sent)
 
 
 
